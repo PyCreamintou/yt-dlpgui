@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace ffmpegui
 {
     internal static class Program
