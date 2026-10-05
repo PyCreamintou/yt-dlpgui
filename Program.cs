@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace ffmpegui
+namespace yt_dlpgui
 {
     internal static class Program
     {
