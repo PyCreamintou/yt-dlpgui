@@ -8,40 +8,45 @@ namespace yt_dlpgui
     public partial class Form1 : Form
     {
         private Process yt;
-        
+
         public Form1()
         {
             InitializeComponent();
 
 
         }
-        // yt-dlp.exe -P "<path>" -t <ext> -o "<name>" <url>
+        // yt-dlp.exe -P "<path>" -t <ext> -S "res:<quality>,ext" -o "<name>" <url>
         private string SetArgsYt()
         {
             string yt_arguments = "";
-            // path
+            // -P "<path>"
             if (!string.IsNullOrWhiteSpace(FilePathTextbox.Text))
             {
                 yt_arguments += $"-P \"{FilePathTextbox.Text}\" ";
             }
-            // ext
-            if (!string.IsNullOrWhiteSpace(FileFormatCombobox.Text))
-            {
+            // -t <ext> 
+            if (!string.IsNullOrWhiteSpace(FileFormatCombobox.Text) & FileFormatCombobox.Items.Contains(FileFormatCombobox.Text))
+            { 
                 yt_arguments += $"-t {FileFormatCombobox.Text} ";
             }
-            // output name
+            // -S "res:<quality>,ext"
+            if (!string.IsNullOrWhiteSpace(FileQualityComboBox.Text) & FileQualityComboBox.Items.Contains(FileQualityComboBox.Text))
+            {
+                yt_arguments += $"-S \"res:{FileQualityComboBox.Text.Trim("p")},ext\" ";
+            }
+            // -o "<name>"
             if (!string.IsNullOrWhiteSpace(FileNameTextbox.Text))
             {
                 yt_arguments += $"-o \"{FileNameTextbox.Text}\" ";
             }
-            // url
+            // <url>
             if (!string.IsNullOrWhiteSpace(txtLink.Text))
             {
                 yt_arguments += $"{txtLink.Text}";
             }
 
             return yt_arguments;
-            
+
         }
 
         private void ValidateUrl()
@@ -49,7 +54,6 @@ namespace yt_dlpgui
             string message = "You did not enter video url.";
             string caption = "Error detected in url";
             MessageBoxButtons buttons = MessageBoxButtons.OK;
-            DialogResult result;
 
             MessageBox.Show(message, caption, buttons);
         }
@@ -112,6 +116,5 @@ namespace yt_dlpgui
             }
 
         }
-
     }
 }
