@@ -1,15 +1,18 @@
 using System;
 using System.Diagnostics;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 //using System.Xml.Linq;
 //using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace yt_dlpgui
 {
-    public partial class Form1 : Form
+    public partial class MainWindow : Form
     {
         private Process yt;
 
-        public Form1()
+        private string errorText;
+
+        public MainWindow()
         {
             InitializeComponent();
 
@@ -26,13 +29,13 @@ namespace yt_dlpgui
             }
             // -t <ext> 
             if (!string.IsNullOrWhiteSpace(FileFormatCombobox.Text) & FileFormatCombobox.Items.Contains(FileFormatCombobox.Text))
-            { 
+            {
                 yt_arguments += $"-t {FileFormatCombobox.Text} ";
             }
             // -S "res:<quality>,ext"
             if (!string.IsNullOrWhiteSpace(FileQualityComboBox.Text) & FileQualityComboBox.Items.Contains(FileQualityComboBox.Text))
             {
-                yt_arguments += $"-S \"res:{FileQualityComboBox.Text.Trim("p")},ext\" ";
+                yt_arguments += $"-S \"res:{FileQualityComboBox.Text.Trim("p")}\" ";
             }
             // -o "<name>"
             if (!string.IsNullOrWhiteSpace(FileNameTextbox.Text))
@@ -49,10 +52,20 @@ namespace yt_dlpgui
 
         }
 
-        private void ValidateUrl()
+        private void btnGetDirectory_Click(object sender, EventArgs e)
         {
-            string message = "You did not enter video url.";
-            string caption = "Error detected in url";
+            FolderBrowserDialog dialog = new FolderBrowserDialog();
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                FilePathTextbox.Text = dialog.SelectedPath;
+            }
+        }
+
+        private void MessageBoxCreate(string message, string caption)
+        {
+            //message = message ?? "Error";
+            //caption = caption ?? "Error";
             MessageBoxButtons buttons = MessageBoxButtons.OK;
 
             MessageBox.Show(message, caption, buttons);
@@ -69,29 +82,42 @@ namespace yt_dlpgui
                 yt.StartInfo.RedirectStandardOutput = true;
                 yt.StartInfo.RedirectStandardError = true;
 
-                yt.OutputDataReceived += (sender, e) => YtLogReceived(e.Data);
-                yt.ErrorDataReceived += (sender, e) => YtLogReceived(e.Data);
+
+                yt.OutputDataReceived += new DataReceivedEventHandler(YtOutputHandler);
+                yt.ErrorDataReceived  += new DataReceivedEventHandler(YtErrorHandler);
 
                 yt.Start();
 
                 yt.BeginOutputReadLine();
                 yt.BeginErrorReadLine();
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
         }
-        private void YtLogReceived(string data)
+        private void YtOutputHandler(object sender, DataReceivedEventArgs e)
         {
-            if (data == null) return;
+            if (string.IsNullOrEmpty(e.Data)) return;
             if (YtOutput.InvokeRequired)
             {
                 // yt_output.Invoke(new Action<string>(YtLogReceived), data);
-                YtOutput.BeginInvoke(new Action(() => YtLogReceived(data)));
+                YtOutput.BeginInvoke(new Action(() => YtOutputHandler(sender, e)));
                 return;
             }
-            YtOutput.AppendText(data + Environment.NewLine);
+            YtOutput.AppendText(e.Data + Environment.NewLine);
+        }
+        private void YtErrorHandler(object sender, DataReceivedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Data)) return;
+            errorText += e.Data + Environment.NewLine;
+            
+            if (errorText.Contains("ERROR: ")) // TODO: add yt.HasExited 
+            {
+                MessageBoxCreate(errorText, "yt-dlp Error");
+                errorText = string.Empty;
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -99,7 +125,7 @@ namespace yt_dlpgui
 
         }
 
-        private void button_Click(object sender, EventArgs e)
+        private void btnAddClick(object sender, EventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(txtLink.Text))
             {
@@ -112,7 +138,7 @@ namespace yt_dlpgui
             }
             else
             {
-                ValidateUrl();
+                MessageBoxCreate("You did not enter video url.", "ValidateUrl");
             }
 
         }
