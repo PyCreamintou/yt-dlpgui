@@ -78,10 +78,13 @@ namespace yt_dlpgui
 
                 yt.StartInfo.FileName = fileName;
                 yt.StartInfo.Arguments = arguments;
+                yt.StartInfo.UseShellExecute = false;
                 yt.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 yt.StartInfo.RedirectStandardOutput = true;
                 yt.StartInfo.RedirectStandardError = true;
+                yt.StartInfo.CreateNoWindow = true;
 
+                yt.EnableRaisingEvents = true;
 
                 yt.OutputDataReceived += new DataReceivedEventHandler(YtOutputHandler);
                 yt.ErrorDataReceived  += new DataReceivedEventHandler(YtErrorHandler);
@@ -112,14 +115,13 @@ namespace yt_dlpgui
         {
             if (string.IsNullOrEmpty(e.Data)) return;
             errorText += e.Data + Environment.NewLine;
-            
-            if (errorText.Contains("ERROR: ")) // TODO: add yt.HasExited 
+
+            if (errorText.Contains("ERROR: "))
             {
                 MessageBoxCreate(errorText, "yt-dlp Error");
-                errorText = string.Empty;
             }
+            errorText = string.Empty;
         }
-
         private void Form1_Load(object sender, EventArgs e)
         {
 
@@ -135,10 +137,6 @@ namespace yt_dlpgui
                 }
 
                 StartYt(Path.Combine(AppContext.BaseDirectory, "yt-dlp.exe"), SetArgsYt());
-            }
-            else
-            {
-                MessageBoxCreate("You did not enter video url.", "ValidateUrl");
             }
 
         }
